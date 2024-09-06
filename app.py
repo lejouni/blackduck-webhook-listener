@@ -7,17 +7,13 @@ import logging
 import sys
 import json
 from blackduckRemediateVuln import BlackDuckRemediator
-from coverityRemediateVuln import CoverityRemediator
 
 __version__="0.0.3"
 __author__ = "Jouni Lehto"
 
 app = Flask(__name__)
 bd_url="https://testing.blackduck.synopsys.com"
-bd_access_token=""
-cov_url="https://demo.coverity.synopsys.com"
-username=""
-password=""
+bd_access_token="ZGNjNzRmMGYtM2I2Yi00Y2U1LWI1ZGUtYTNhYmI5MzYwNzc2Ojg3NWNjMDczLWYyN2QtNGI4MS04ZjZlLTUzMzk1NDNjNzQ1NA=="
 
 @app.route('/webhook/github/asevents', methods=['POST'])
 def webhook():
@@ -45,6 +41,9 @@ def webhook():
                     #NOTE help_uri contains the whole path to iac finding
                     success = remediator.dismissIaC(remediation_event["alert"]["rule"]["help_uri"], 
                                                     f'{True if remediation_event["action"] == "closed_by_user" else False}')
+            else:
+                success = False
+                logging.error(f'Tool {remediation_event["alert"]["tool"]["name"]} is not implemented yet!')
             end = timer()
             usedTime = end - start
             logging.debug(f"Took: {usedTime} seconds.")

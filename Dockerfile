@@ -10,7 +10,6 @@ COPY requirements.txt /github/
 RUN pip install -r /github/requirements.txt
 COPY app.py /github/
 COPY blackduckRemediateVuln.py /github/
-COPY coverityRemediateVuln.py /github/
 EXPOSE 8090/tcp
 WORKDIR /github
 # These are needed for Seeker agent installation
