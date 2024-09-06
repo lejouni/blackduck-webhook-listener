@@ -171,7 +171,7 @@ class BlackDuckRemediator:
 #Main method is only for testing the script without the webhook integration
 if __name__ == '__main__':
     try:
-        remediator = BlackDuckRemediator("https://testing.blackduck.synopsys.com","ZGNjNzRmMGYtM2I2Yi00Y2U1LWI1ZGUtYTNhYmI5MzYwNzc2Ojg3NWNjMDczLWYyN2QtNGI4MS04ZjZlLTUzMzk1NDNjNzQ1NA==")
+        remediator = BlackDuckRemediator("https://testing.blackduck.synopsys.com","")
         #DUPLICATE, IGNORED, MITIGATED, NEEDS_REVIEW, NEW, PATCHED, REMEDIATION_COMPLETE, REMEDIATION_REQUIRED
         #IN_VIOLATION_OVERRIDDEN, IN_VIOLATION
         logging.debug(remediator.updatePolicyStatus("lejouni/sampleapp", "main", "Restcomm", "1.0.41", "No External Projects With Reciprocal Licenses", "IN_VIOLATION_OVERRIDDEN", "won't fix", "Will upgrade on next sprint.", "2024-09-07T00:00:00.000Z"))

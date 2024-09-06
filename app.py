@@ -13,7 +13,7 @@ __author__ = "Jouni Lehto"
 
 app = Flask(__name__)
 bd_url="https://testing.blackduck.synopsys.com"
-bd_access_token="ZGNjNzRmMGYtM2I2Yi00Y2U1LWI1ZGUtYTNhYmI5MzYwNzc2Ojg3NWNjMDczLWYyN2QtNGI4MS04ZjZlLTUzMzk1NDNjNzQ1NA=="
+bd_access_token=""
 
 @app.route('/webhook/github/asevents', methods=['POST'])
 def webhook():
