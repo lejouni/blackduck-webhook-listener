@@ -1,6 +1,6 @@
 {
     "github-webhook": {
-        "image": ":github-webhook-service.github-webhook-container.32",
+        "image": ":github-webhook-service.github-webhook-container.34",
         "ports": {
             "8090": "HTTP"
         },

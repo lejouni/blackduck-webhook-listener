@@ -38,12 +38,12 @@ def webhook():
                     success = remediator.remediate(projectName, projectVersionName, rule_id[1],rule_id[2],rule_id[0],remediation_event["alert"]["dismissed_reason"], remediation_event["alert"]["dismissed_comment"])
                 elif str(remediation_event["alert"]["rule"]["id"]).startswith("POLICY"):
                     #NOTE projectName, projectVersionName, componentName, componentVersionName, approvalStatus, comment="-", overrideExpiresAt=None
-                    success = remediator.updatePolicyStatus(projectName, projectVersionName, rule_id[2], rule_id[3], 
+                    success = remediator.updatePolicyStatus(projectName, projectVersionName, rule_id[2], rule_id[3], rule_id[1], 
                                                             f'{"IN_VIOLATION_OVERRIDDEN" if remediation_event["action"] == "closed_by_user" else "IN_VIOLATION"}',
                                                             remediation_event["alert"]["dismissed_reason"],remediation_event["alert"]["dismissed_comment"])
                 elif str(remediation_event["alert"]["rule"]["id"]).startswith("IAC"):
                     #NOTE help_uri contains the whole path to iac finding
-                    success = remediator.dismissIaC(remediation_event["rule"]["help_uri"], 
+                    success = remediator.dismissIaC(remediation_event["alert"]["rule"]["help_uri"], 
                                                     f'{True if remediation_event["action"] == "closed_by_user" else False}')
             end = timer()
             usedTime = end - start

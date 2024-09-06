@@ -2,9 +2,10 @@ import logging
 import sys
 from blackduck.HubRestApi import HubInstance
 import requests
+import json
 
 __author__ = "Jouni Lehto"
-__versionro__="0.0.2"
+__versionro__="0.0.3"
 
 class BlackDuckRemediator:
     def __init__(self, url, token, log_level=logging.DEBUG):
@@ -68,11 +69,12 @@ class BlackDuckRemediator:
     :param projectVersionName: Black Duck project version name
     :param componentName: Black Duck component name
     :param componentVersionName: Black Duck component version name
+    :param policyName: Policy name which will be overwritten. Component might have several policy violations, this will identify the right one.
     :param approvalStatus: Remediation status
     :param comment: Remediation comment
     :param overrideExpiresAt: date for overwrite expiration in format example 2024-09-07T00:00:00.000Z
     """
-    def updatePolicyStatus(self, projectName, projectVersionName, componentName, componentVersionName, approvalStatus, reason, comment="-", overrideExpiresAt=None):
+    def updatePolicyStatus(self, projectName, projectVersionName, componentName, componentVersionName, policyName, approvalStatus, reason, comment="-", overrideExpiresAt=None):
         if projectName and projectVersionName and componentName and componentVersionName:
             parameters={"q":"name:{}".format(projectName)}
             projects = self.hub.get_projects(limit=1, parameters=parameters)
@@ -89,11 +91,17 @@ class BlackDuckRemediator:
                     logging.debug(f'Updating component policy status with: {remediationData}')
                     url = self.__get_version_component_url(version, componentName, componentVersionName)
                     if url:
-                        response = requests.put(url, headers=headers, json=remediationData, verify = not self.hub.config['insecure'])
-                        if response.status_code == 202:
-                            return True
-                        else:
-                            logging.error(f"Policy overwrite failed: {response}/{response.content}")
+                        response = requests.get(url, headers=headers, verify = not self.hub.config['insecure'])
+                        if response.status_code == 200:
+                            policies = response.json()
+                            for policy in policies["items"]:
+                                if policy["name"] == policyName:
+                                    policyRuleID = policy["_meta"]["href"].split('/')[-1]
+                                    response = requests.put(f'{url}/{policyRuleID}/policy-status', headers=headers, json=remediationData, verify = not self.hub.config['insecure'])
+                                    if response.status_code == 202:
+                                        return True
+                                    else:
+                                        logging.error(f"Policy overwrite failed: {response}/{response.content}")
         return False
 
     """
@@ -133,7 +141,7 @@ class BlackDuckRemediator:
             if jsondata["totalCount"] > 0:
                 for item in jsondata["items"]:
                     if item["componentName"] == componentName and item["componentVersionName"] == componentVersionName:
-                        return self.__getLinksparam(item, "policy-status", "href")
+                        return self.__getLinksparam(item, "policy-rules", "href")
         else:
             logging.error(f"__get_version_components failed: {response}/{response.content}")
 
@@ -166,8 +174,8 @@ if __name__ == '__main__':
         remediator = BlackDuckRemediator("https://testing.blackduck.synopsys.com","ZGNjNzRmMGYtM2I2Yi00Y2U1LWI1ZGUtYTNhYmI5MzYwNzc2Ojg3NWNjMDczLWYyN2QtNGI4MS04ZjZlLTUzMzk1NDNjNzQ1NA==")
         #DUPLICATE, IGNORED, MITIGATED, NEEDS_REVIEW, NEW, PATCHED, REMEDIATION_COMPLETE, REMEDIATION_REQUIRED
         #IN_VIOLATION_OVERRIDDEN, IN_VIOLATION
-        # logging.debug(remediator.updatePolicyStatus("lejouni/sampleapp", "main", "Restcomm", "1.0.41", "IN_VIOLATION_OVERRIDDEN", "won't fix", "Will upgrade on next sprint.", "2024-09-07T00:00:00.000Z"))
-        logging.debug(remediator.dismissIaC("https://testing.blackduck.synopsys.com/api/projects/5238adb2-d99a-4649-baf8-494589bcdb9e/versions/fabd4412-9eb6-44a2-b583-bd81c4f9c98b/iac-issues/16e67b88-fa9b-36d3-b7ed-b4d1389d73ec", True))
+        logging.debug(remediator.updatePolicyStatus("lejouni/sampleapp", "main", "Restcomm", "1.0.41", "No External Projects With Reciprocal Licenses", "IN_VIOLATION_OVERRIDDEN", "won't fix", "Will upgrade on next sprint.", "2024-09-07T00:00:00.000Z"))
+        # logging.debug(remediator.dismissIaC("https://testing.blackduck.synopsys.com/api/projects/5238adb2-d99a-4649-baf8-494589bcdb9e/versions/fabd4412-9eb6-44a2-b583-bd81c4f9c98b/iac-issues/16e67b88-fa9b-36d3-b7ed-b4d1389d73ec", True))
     except Exception as e:
         logging.exception(e)
         raise SystemError(e)
