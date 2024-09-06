@@ -1,0 +1,12 @@
+{
+    "github-webhook": {
+        "image": ":github-webhook-service.github-webhook-container.32",
+        "ports": {
+            "8090": "HTTP"
+        },
+        "environment": {
+            "SEEKER_SERVER_URL": "https://demo.seeker.synopsys.com:443",
+            "SEEKER_PROJECT_KEY": "projectkey"
+        }
+    }
+}
