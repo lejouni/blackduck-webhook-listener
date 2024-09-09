@@ -1,3 +1,11 @@
+'''
+This is a webhook for the GitHub Advance Security status change events to update finding statuses also in 
+Black Duck tools.
+
+This will require that Sarif format findings are created via black-duck-sarif-formatter (https://github.com/synopsys-sig-community/blackduck-sarif-formatter).
+Requirements per tool:
+    Black Duck: the repository name (github.repository) is used for project name and branch name (github.ref_name) for project version.
+'''
 import sys
 from flask import Flask, request,  abort
 import socket
@@ -13,7 +21,7 @@ __author__ = "Jouni Lehto"
 
 app = Flask(__name__)
 bd_url="https://testing.blackduck.synopsys.com"
-bd_access_token=""
+bd_access_token="ZGNjNzRmMGYtM2I2Yi00Y2U1LWI1ZGUtYTNhYmI5MzYwNzc2Ojg3NWNjMDczLWYyN2QtNGI4MS04ZjZlLTUzMzk1NDNjNzQ1NA=="
 
 @app.route('/webhook/github/asevents', methods=['POST'])
 def webhook():
@@ -30,13 +38,13 @@ def webhook():
                 #TODO Check is event for vulnerability remediation or for policy overwritten
                 remediator = BlackDuckRemediator(bd_url, bd_access_token)
                 if len(rule_id) == 3:
-                    #NOTE Black will need black duck projectName, projectVersionName, componentName, componentVersionName, vulnerabilityName, remediationStatus, remediationComment
-                    success = remediator.remediate(projectName, projectVersionName, rule_id[1],rule_id[2],rule_id[0],remediation_event["alert"]["dismissed_reason"], remediation_event["alert"]["dismissed_comment"])
+                    #NOTE Black will need black duck projectName, projectVersionName, componentName, componentVersionName, vulnerabilityName, remediationStatus, remediationComment, dismissedBy
+                    success = remediator.remediate(projectName, projectVersionName, rule_id[1],rule_id[2],rule_id[0],remediation_event["sender"]["login"], remediation_event["alert"]["dismissed_reason"], remediation_event["alert"]["dismissed_comment"])
                 elif str(remediation_event["alert"]["rule"]["id"]).startswith("POLICY"):
-                    #NOTE projectName, projectVersionName, componentName, componentVersionName, approvalStatus, comment="-", overrideExpiresAt=None
+                    #NOTE projectName, projectVersionName, componentName, componentVersionName, approvalStatus, comment="-", overrideExpiresAt=None, dismissedBy
                     success = remediator.updatePolicyStatus(projectName, projectVersionName, rule_id[2], rule_id[3], rule_id[1], 
                                                             f'{"IN_VIOLATION_OVERRIDDEN" if remediation_event["action"] == "closed_by_user" else "IN_VIOLATION"}',
-                                                            remediation_event["alert"]["dismissed_reason"],remediation_event["alert"]["dismissed_comment"])
+                                                            remediation_event["sender"]["login"], remediation_event["alert"]["dismissed_reason"],remediation_event["alert"]["dismissed_comment"])
                 elif str(remediation_event["alert"]["rule"]["id"]).startswith("IAC"):
                     #NOTE help_uri contains the whole path to iac finding
                     success = remediator.dismissIaC(remediation_event["alert"]["rule"]["help_uri"], 
