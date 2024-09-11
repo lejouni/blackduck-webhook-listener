@@ -1,4 +1,10 @@
 {
     "containerName": "github-webhook",
-    "containerPort": 8090
+    "containerPort": 8090,
+    "healthCheck": {
+        "intervalSeconds": 300,
+        "healthyThreshold": 3,
+        "timeoutSeconds": 60,
+        "unhealthyThreshold": 5
+    }
 }

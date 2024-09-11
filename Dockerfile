@@ -1,6 +1,6 @@
 FROM public.ecr.aws/docker/library/python:3.13.0b2-alpine3.20 as install
 LABEL NAME="GitHub Webhook Listener"
-LABEL VERSION=0.0.3
+LABEL VERSION=0.0.4
 
 WORKDIR /
 RUN mkdir -m 777 -p github
