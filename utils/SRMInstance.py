@@ -2,7 +2,7 @@ import logging
 import sys
 import requests
 from dateutil.parser import parse
-from SecretManager import SecretManager
+from utils.SecretManager import SecretManager
 
 class SRMInstance:
     def __init__(self, log_level=logging.DEBUG):

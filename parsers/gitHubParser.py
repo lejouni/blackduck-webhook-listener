@@ -3,7 +3,7 @@ This will require that Sarif format findings are created via blackduck-sarif-for
 Blackduck-sarif-formatter will add \"Metadata\" -section to Black Duck finding, which will contain all the needed values for
 finging the same issue from Black Duck when GHAS finding status is changed and this webhook will try to update the status to Black Duck.
 '''
-from Constants import Tools, GitHubTools
+from utils.Constants import Tools, GitHubTools
 
 class GitHubParser():
     def __init__(self):

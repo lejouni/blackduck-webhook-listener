@@ -1,5 +1,5 @@
-from SRMInstance import SRMInstance
-from Constants import Tools, SRMTools
+from utils.SRMInstance import SRMInstance
+from utils.Constants import Tools, SRMTools
 
 class SRMParser():
     def __init__(self):

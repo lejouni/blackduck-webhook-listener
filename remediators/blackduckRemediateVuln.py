@@ -2,7 +2,7 @@ import logging
 import sys
 from blackduck.HubRestApi import HubInstance
 import requests
-from SecretManager import SecretManager
+from utils.SecretManager import SecretManager
 
 __author__ = "Jouni Lehto"
 __versionro__="0.0.5"

@@ -15,11 +15,11 @@ from timeit import default_timer as timer
 import logging
 import sys
 import json
-from blackduckRemediateVuln import BlackDuckRemediator
-from coverityRemediateVuln import CoverityRemediator
-from gitHubParser import GitHubParser
-from srmParser import SRMParser
-from Constants import Tools
+from remediators.blackduckRemediateVuln import BlackDuckRemediator
+from remediators.coverityRemediateVuln import CoverityRemediator
+from parsers.gitHubParser import GitHubParser
+from parsers.srmParser import SRMParser
+from utils.Constants import Tools
 
 __version__="0.0.5"
 __author__ = "Jouni Lehto"

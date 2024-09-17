@@ -2,8 +2,8 @@ import logging
 import sys
 import requests
 import json
-from SRMInstance import SRMInstance
-from SecretManager import SecretManager
+from utils.SRMInstance import SRMInstance
+from utils.SecretManager import SecretManager
 
 __author__ = "Jouni Lehto"
 __versionro__="0.0.5"
