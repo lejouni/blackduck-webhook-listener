@@ -70,7 +70,7 @@ def srm_webhook():
                         elif metadata["tool"]  == Tools.COVERITY:
                             success = CoverityRemediator().updateStatus(metadata)
                         else:
-                            logging.error(f'Tool: {result["tool"]} is not currently supported!')
+                            logging.error(f'Tool: {metadata["tool"]} is not currently supported!')
                     else:
                         logging.error(f'Finding status: {finding["findingStatus"]["id"]} is not currently supported!')
         end = timer()

@@ -22,6 +22,8 @@ class GitHubParser():
             elif event["alert"]["tool"]["name"] == GitHubTools.COVERITY:
                 metadata = self.__parseForCoverity(event)
                 metadata["tool"] = Tools.COVERITY
+            else:
+                metadata["tool"] = event["alert"]["tool"]["name"]
             metadata["action_allowed"] = False
             if event["trigger"] == "finding:status-update":
                 metadata["action_allowed"] = True

@@ -18,6 +18,8 @@ class SRMParser():
             elif result["tool"] == SRMTools.COVERITY:
                 metadata = self.__parseForCoverity(result, finding)
                 metadata["tool"] = Tools.COVERITY
+            else:
+                metadata["tool"] = result["tool"]
         return metadata
 
     def __parseForCoverity(self, result, finding):
