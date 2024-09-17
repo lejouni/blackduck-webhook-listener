@@ -26,7 +26,7 @@ __author__ = "Jouni Lehto"
 
 app = Flask(__name__)
 
-@app.route('/webhook/github/asevents', methods=['POST'])
+@app.route('/webhook/github', methods=['POST'])
 def github_webhook():
     try:
         start = timer()
