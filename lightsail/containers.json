@@ -1,12 +1,15 @@
 {
-    "github-webhook": {
-        "image": ":github-webhook-service.github-webhook-container.56",
+    "blackduck-webhook": {
+        "image": ":blackduck-webhook-service.blackduck-webhook-container.56",
         "ports": {
             "8090": "HTTP"
         },
         "environment": {
             "SEEKER_SERVER_URL": "https://demo.seeker.synopsys.com:443",
-            "SEEKER_PROJECT_KEY": "projectkey"
+            "SEEKER_PROJECT_KEY": "projectkey",
+            "AWS_ACCESS_KEY_ID": "ASIA2WCZO2AR2OKWPRMB",
+            "AWS_SECRET_ACCESS_KEY": "pa647TjCUPr1QQJf7dGLZEqI/HI3ucqP5QOo4y52",
+            "AWS_SESSION_TOKEN": "IQoJb3JpZ2luX2VjEH0aCXVzLWVhc3QtMSJGMEQCIBgWUln6YBqNyQt0xkNpvyEQGQvaH6XRAtVuO7FHav/JAiAnN62/38JZsbXedMKraQ41lMuoQrlgTXMM5vriYv/LgSqMAwim//////////8BEAAaDDczNDYyNzAyNDkzMSIM8peHIyL+jp9uMkg7KuACDSp097uR3VpvwOOTCnI7x7XZjNWO/6hX/+FrRkGrc59vhhvEIqVhmtw1wG9VOmdo7VgI/zwWVrFBn/twg/rrfX6ONyZpKxLEWM9lJ0eOXo91nKOmfDvDI+dm0R8XmZt+0loBt8d79bXwn9szoxfVDoAjEYQxQYFfDaQC7IhwIdbZftfd5kZ1Ed57yayssb49JXNIHVjrgUcu9eenNHqb7JsetHlKslMpLB/eTW93P4Lh4iXoxcb6BGsQyUFJgFEZfsz7QJajgbPD1AfzWCg4eb2jCFl3Ke7+zf9l/LXcv/nrpQEX4j0xbC6jf/sXuNq18c53LsVETqHSoA8IIBMX/UVfnHvhJT0iI0K9QORRX7el7PezdvHk1DczMCWJx3Ej9kl6AFCPKE5PIkZSOrBbWb59r7BSIIvMF+8JSwOGMK3Bp2dMwA6sbDEbHRfWqX0maK37jZiylZ9A41TAOl6oPzC2xYu3BjqnAWxY08MOzRFArGjBI17Nzv59jLcvbagGRfgu8Iaqa8QNgm3GThUEEg1xHq88qEEVoOF3M0oRUPGXdGwh61mRb9wIGeHTxpsDW2Gt0mne3YZ25IlpV1hVcZ4EGl40mWigw0vp+FBLGTTuuib6uSlkOIf+ZG8VL0+D2OSrXfeF6epUG21K7D6KWorhmGmiXujpcgNCknX4cY+aGpUEooi2VTLdethV9xQH"
         }
     }
 }

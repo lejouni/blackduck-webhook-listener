@@ -5,37 +5,37 @@
 #   export AWS_SESSION_TOKEN
 #Run the commands in root folder
 
-#Create the github-webhook-container -docker image.
-docker build -t github-webhook-container:latest .
+#Create the blackduck-webhook-container -docker image.
+docker build -t blackduck-webhook-container:latest .
 
 #Create the small aws lightsail container service
-aws lightsail create-container-service --service-name github-webhook-service --power small --scale 1
+aws lightsail create-container-service --service-name blackduck-webhook-service --power small --scale 1
 
 #Use below command to check when the container service is in READY state
 aws lightsail get-container-services
 
 #This can be run when container-service is in READY state
-aws lightsail push-container-image --service-name github-webhook-service --label github-webhook-container --image github-webhook-container
+aws lightsail push-container-image --service-name blackduck-webhook-service --label blackduck-webhook-container --image blackduck-webhook-container
 
 #Previous command will give you the image name, which you need to update into containers.json, before running the next command below.
 #Example:
-#   Image "github-webhook-container" registered.
-#   Refer to this image as ":github-webhook-service.github-webhook-container.1" in deployments.
-aws lightsail create-container-service-deployment --service-name github-webhook-service --containers file://lightsail/containers.json --public-endpoint file://lightsail/public-endpoint.json
+#   Image "blackduck-webhook-container" registered.
+#   Refer to this image as ":blackduck-webhook-service.blackduck-webhook-container.1" in deployments.
+aws lightsail create-container-service-deployment --service-name blackduck-webhook-service --containers file://lightsail/containers.json --public-endpoint file://lightsail/public-endpoint.json
 
 #Use this to check when the service is ready. This will also show the webhook URL.
 #Service state must be "ACTIVE"
 #URL Example:
-#    "url": "https://github-webhook-service.p7pkbhrp45cc2.us-east-1.cs.amazonlightsail.com/"
-#URL to add github will then be: https://github-webhook-service.p7pkbhrp45cc2.us-east-1.cs.amazonlightsail.com//webhook/github/asevents
-aws lightsail get-container-services --service-name github-webhook-service
+#    "url": "https://blackduck-webhook-service.p7pkbhrp45cc2.us-east-1.cs.amazonlightsail.com/"
+#URL to add github will then be: https://blackduck-webhook-service.p7pkbhrp45cc2.us-east-1.cs.amazonlightsail.com//webhook/github/asevents
+aws lightsail get-container-services --service-name blackduck-webhook-service
 
 #After testing is done, you can delete the service with below command.
-aws lightsail delete-container-service --service-name github-webhook-service
+aws lightsail delete-container-service --service-name blackduck-webhook-service
 aws lightsail get-container-services
 
 #If you want to get the logs. Logs are paged. This command will give you the page-token for the next page.
-aws lightsail get-container-log --service-name github-webhook-service --container-name github-webhook
+aws lightsail get-container-log --service-name blackduck-webhook-service --container-name blackduck-webhook
 
 #You need to add the page-token when getting the next page.
-aws lightsail get-container-log --service-name github-webhook-service --container-name github-webhook --page-token
+aws lightsail get-container-log --service-name blackduck-webhook-service --container-name blackduck-webhook --page-token

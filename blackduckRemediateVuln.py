@@ -1,17 +1,11 @@
-'''
-This will require that Sarif format findings are created via blackduck-sarif-formatter (https://github.com/synopsys-sig-community/blackduck-sarif-formatter).
-Blackduck-sarif-formatter will add \"Metadata\" -section to Black Duck finding, which will contain all the needed values for
-finging the same issue from Black Duck when GHAS finding status is changed and this webhook will try to update the status to Black Duck.
-'''
 import logging
 import sys
 from blackduck.HubRestApi import HubInstance
 import requests
+from SecretManager import SecretManager
 
 __author__ = "Jouni Lehto"
-__versionro__="0.0.4"
-bd_url=""
-bd_access_token=""
+__versionro__="0.0.5"
 
 class BlackDuckRemediator:
     def __init__(self, log_level=logging.DEBUG):
@@ -21,34 +15,30 @@ class BlackDuckRemediator:
         logging.basicConfig(format='%(asctime)s:%(levelname)s:%(module)s: %(message)s', stream=sys.stderr, level=log_level)
         #Printing out the version number
         logging.debug("Black Duck Remediator version: " + __versionro__)
+        bd_url = SecretManager().get_secret("BLACKDUCK")["BLACKDUCK_SERVER_URL"]
         #Removing / -mark from end of url, if it exists
         url = f'{bd_url if not bd_url.endswith("/") else bd_url[:-1]}'
-        self.hub = HubInstance(url, api_token=bd_access_token, insecure=False)
+        self.hub = HubInstance(url, api_token=SecretManager().get_secret("BLACKDUCK")["BLACKDUCK_ACCESSTOKEN"], insecure=False)
 
     '''
-    Handle GHAS Black Duck events.
-    :param remediation_event: GHAS event
+    Handle the Black Duck events.
+    :param metadata: contains needed info. Collected by using correct parses (GitHubParser or SRMParser)
     '''
-    def handleEvent(self, remediation_event):
+    def updateStatus(self, metadata):
         success = False
-        metadata = self.__parseMetadata(remediation_event)
         if metadata:
-            projectVersionName = remediation_event["alert"]["most_recent_instance"]["ref"].split("/")[-1]
-            projectName = remediation_event["repository"]["full_name"]
-            if metadata['bd_issue_type'] == "SECURITY":
+            if str(metadata['bd_issue_type']).lower() == "security":
                 #NOTE Black will need black duck projectName, projectVersionName, componentName, componentVersionName, vulnerabilityName, remediationStatus, remediationComment, dismissedBy
-                success = self.__remediate(projectName, projectVersionName, metadata['bd_component_name'],metadata['bd_component_version_name'],
-                                            metadata['bd_vulnerability_name'],remediation_event["sender"]["login"], remediation_event["alert"]["dismissed_reason"], remediation_event["alert"]["dismissed_comment"])
-            elif metadata['bd_issue_type'] == "POLICY":
+                success = self.__remediate(metadata['bd_project_name'], metadata['bd_project_version_name'], metadata['bd_component_name'],metadata['bd_component_version_name'],
+                                            metadata['bd_vulnerability_name'],metadata["changedBy"], metadata["vulnerabilitys_status"], metadata["all_comments"])
+            elif str(metadata['bd_issue_type']).lower() == "policy":
                 #NOTE projectName, projectVersionName, componentName, componentVersionName, policyName, approvalStatus, dismissedBy, reason, comment="-", overrideExpiresAt=None
-                success = self.__updatePolicyStatus(projectName, projectVersionName, metadata['bd_component_name'],
+                success = self.__updatePolicyStatus(metadata['bd_project_name'], metadata['bd_project_version_name'], metadata['bd_component_name'],
                                                         metadata['bd_component_version_name'], metadata['bd_policy_name'], 
-                                                        f'{"IN_VIOLATION_OVERRIDDEN" if remediation_event["action"] == "closed_by_user" else "IN_VIOLATION"}',
-                                                        remediation_event["sender"]["login"], remediation_event["alert"]["dismissed_reason"],remediation_event["alert"]["dismissed_comment"])
-            elif metadata['bd_issue_type'] == "IAC":
+                                                        metadata["policy_status"], metadata["changedBy"], metadata["policy_reason"],metadata["newest_comment"])
+            elif str(metadata['bd_issue_type']).lower() == "iac":
                 #NOTE projectName, projectVersionName, iac_checker, dismissStatus
-                success = self.__dismissIaC(projectName, projectVersionName, metadata['bd_iac_checkerID'], 
-                                                f'{True if remediation_event["action"] == "closed_by_user" else False}')
+                success = self.__dismissIaC(metadata['bd_project_name'], metadata['bd_project_version_name'], metadata['bd_iac_checkerID'], metadata["iac_status"])
         else:
             success = False
             logging.info(f'GitHub event is too old and missing \"Metadata\" -section -> cannot find event from Black Duck!')
@@ -192,6 +182,10 @@ class BlackDuckRemediator:
                     for data in metadatas:
                         if str(data).startswith("**Black Duck Issue Type:**"):
                             metadata['bd_issue_type'] = data.split(':**')[-1].strip()
+                        elif str(data).startswith("**Black Duck Project Name:**"):
+                            metadata['bd_project_name'] = data.split(':**')[-1].strip()
+                        elif str(data).startswith("**Black Duck Project Version Name:**"):
+                            metadata['bd_project_version_name'] = data.split(':**')[-1].strip()
                         elif str(data).startswith("**Black Duck Vulnerability Name:**"):
                             metadata['bd_vulnerability_name'] = data.split(':**')[-1].strip()
                         elif str(data).startswith("**Black Duck Component Name:**"):

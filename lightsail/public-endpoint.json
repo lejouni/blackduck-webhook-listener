@@ -1,5 +1,5 @@
 {
-    "containerName": "github-webhook",
+    "containerName": "blackduck-webhook",
     "containerPort": 8090,
     "healthCheck": {
         "intervalSeconds": 300,
