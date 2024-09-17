@@ -275,15 +275,3 @@ class BlackDuckRemediator:
             "won't fix": "IGNORED" 
         }
         return switcher.get(remediationStatus, "NEW")
-    
-#Main method is only for testing the script without the webhook integration
-if __name__ == '__main__':
-    try:
-        remediator = BlackDuckRemediator(bd_url,bd_access_token)
-        #DUPLICATE, IGNORED, MITIGATED, NEEDS_REVIEW, NEW, PATCHED, REMEDIATION_COMPLETE, REMEDIATION_REQUIRED
-        #IN_VIOLATION_OVERRIDDEN, IN_VIOLATION
-        logging.debug(remediator.updatePolicyStatus("lejouni/sampleapp", "main", "Restcomm", "1.0.41", "No External Projects With Reciprocal Licenses", "IN_VIOLATION_OVERRIDDEN", "won't fix", "Will upgrade on next sprint.", "2024-09-07T00:00:00.000Z"))
-        # logging.debug(remediator.dismissIaC("https://testing.blackduck.synopsys.com/api/projects/5238adb2-d99a-4649-baf8-494589bcdb9e/versions/fabd4412-9eb6-44a2-b583-bd81c4f9c98b/iac-issues/16e67b88-fa9b-36d3-b7ed-b4d1389d73ec", True))
-    except Exception as e:
-        logging.exception(e)
-        raise SystemError(e)
