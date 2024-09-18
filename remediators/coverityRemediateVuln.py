@@ -2,7 +2,6 @@ import logging
 import sys
 import requests
 import json
-from utils.SRMInstance import SRMInstance
 from utils.SecretManager import SecretManager
 
 __author__ = "Jouni Lehto"
@@ -20,7 +19,6 @@ class CoverityRemediator:
         self.url = f'{cov_url if not cov_url.endswith("/") else cov_url[:-1]}'
         self.username = SecretManager().get_secret("COVERITY")["COV_USERNAME"]
         self.password = SecretManager().get_secret("COVERITY")["COV_PASSWORD"]
-        self.srm = SRMInstance()
 
     """
     Remediate Coverity specific issue.
