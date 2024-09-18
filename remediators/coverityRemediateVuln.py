@@ -30,9 +30,9 @@ class CoverityRemediator:
         #NOTE Coverity remediation endpoint will need: CIDs, mergeKeys, streamName, remediationStatus, remediationComment
         #NOTE Script will use CIDs if they are given otherwise mergeKeys. Stream name is used to figure out the needed triage store name.
         if metadata["cov_cids"]:
-            success = self.__remediate(metadata["cov_cids"], None, metadata["cov_stream"], metadata["cov_status"], metadata["cov_comment"])
+            success = self.__remediate(metadata["cov_cids"], None, metadata["cov_stream"], metadata["cov_status"], self.__createComment(metadata))
         elif metadata["cov_merge_keys"]:
-            success = self.__remediate(None, metadata["cov_merge_keys"], metadata["cov_stream"], metadata["cov_status"], metadata["cov_comment"])
+            success = self.__remediate(None, metadata["cov_merge_keys"], metadata["cov_stream"], metadata["cov_status"], self.__createComment(metadata))
         else:
             logging.error("Finding was missing CID and Merge Key. Issue has to have some of them!")
         return success
@@ -55,7 +55,7 @@ class CoverityRemediator:
                 remediationData["cids"] = CIDs
             elif mergeKeys and len(mergeKeys) > 0:
                 remediationData["mergeKeys"] = mergeKeys
-            remediationData["attributeValuesList"] = [{"attributeName": "Classification", "attributeValue": self.__checkRemediationStatusMapping(remediationStatus)}, 
+            remediationData["attributeValuesList"] = [{"attributeName": "Classification", "attributeValue": remediationStatus}, 
                                                       {"attributeName": "comment", "attributeValue": remediationComment}]
             response = requests.put(self.url + endpoint, headers=headers, data=json.dumps(remediationData), auth=(self.username, self.password))
             if response and response.status_code == 200:
@@ -66,6 +66,13 @@ class CoverityRemediator:
             logging.error(f'Triage store not found for given stream: {streamName}')
         return False
             
+    def __createComment(self, metadata):
+        comment = ""
+        if metadata:
+            comment = f'Reason: {metadata["dismiss_reason"] if metadata["dismiss_reason"] else "-"}\n'
+            comment = f'{comment}Comment: {metadata["cov_comment"] if metadata["cov_comment"] else "-"}\n'
+            comment = f'{comment}Changed by: {metadata["changedBy"] if metadata["changedBy"] else "-"}'
+        return comment
     
     def __getTriageStoreForStream(self, stream_name):
         headers = {'Accept': 'application/json'}
@@ -79,18 +86,6 @@ class CoverityRemediator:
                     else:
                         return None
         return None
-
-    def __checkRemediationStatusMapping(self, remediationStatus):
-        switcher = { 
-            "not-triaged": "Unclassified", 
-            "false-positive": "False Positive", 
-            "ignored": "Intentional", 
-            "to-be-fixed": "Pending", 
-            "fixed": "Bug", 
-            "mitigated": "Intentional", 
-            "reopened": "Unclassified"
-        }
-        return switcher.get(remediationStatus, "Unclassified")
 
 #Main method is only for testing the script without the webhook integration
 if __name__ == '__main__':

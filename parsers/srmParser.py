@@ -18,8 +18,13 @@ class SRMParser():
             elif result["tool"] == SRMTools.COVERITY:
                 metadata = self.__parseForCoverity(result, finding)
                 metadata["tool"] = Tools.COVERITY
+            elif result["tool"] == SRMTools.CNC:
+                metadata = self.__parseForCoverity(result, finding)
+                metadata["tool"] = Tools.CNC
             else:
                 metadata["tool"] = result["tool"]
+        metadata["changedBy"] = "SRM"
+        metadata["dismiss_reason"] = finding["status"]
         return metadata
 
     def __parseForCoverity(self, result, finding):
@@ -29,7 +34,7 @@ class SRMParser():
         elif result["metadata"]["Coverity Merge Key"] and len(result["metadata"]["Coverity Merge Key"]) > 0:
             metadata["cov_merge_keys"] = result["metadata"]["Coverity Merge Key"].split(",")
         metadata["cov_stream"] = result["metadata"]["Coverity Stream"]
-        metadata["cov_status"] = finding["status"]
+        metadata["cov_status"] = self.__statusMappingforCoverity(finding["status"])
         metadata["cov_comment"] = self.srm.getRemediationComments(finding["id"], finding["projectId"], True)
         return metadata
 
@@ -40,7 +45,6 @@ class SRMParser():
         metadata["bd_component_name"] = f'{result["metadata"]["Black Duck Component Name"] if "Black Duck Component Name" in result["metadata"] else None}'
         metadata["bd_component_version_name"] = f'{result["metadata"]["Black Duck Component Version"] if "Black Duck Component Version" in result["metadata"] else None}'
         metadata["bd_issue_type"] = str(result["metadata"]["Black Duck Issue Type"]).lower()
-        metadata["changedBy"] = "SRM"
 
         if metadata["bd_issue_type"] == "security":
             vulnerabilities = []
@@ -48,7 +52,7 @@ class SRMParser():
                 for vulnerability in result["vulnerabilities"]:
                     vulnerabilities.append(vulnerability["identifier"])
             metadata["vulnerabilities"] = vulnerabilities
-            metadata["vulnerabilitys_status"] = finding["status"]
+            metadata["vulnerabilitys_status"] = self.__statusMappingforBlackDuck(finding["status"])
             metadata["all_comments"] = self.srm.getRemediationComments(finding["id"], finding["projectId"])
         elif metadata["bd_issue_type"] == "policy":
             metadata["bd_policy_name"] = result["descriptor"]["name"]
@@ -71,3 +75,27 @@ class SRMParser():
             if not findingStatus == "reopened":
                 return True
         return False
+    
+    def __statusMappingforCoverity(self, remediationStatus):
+        switcher = { 
+            "not-triaged": "Unclassified", 
+            "false-positive": "False Positive", 
+            "ignored": "Intentional", 
+            "to-be-fixed": "Pending", 
+            "fixed": "Bug", 
+            "mitigated": "Intentional", 
+            "reopened": "Unclassified"
+        }
+        return switcher.get(remediationStatus, "Unclassified")
+    
+    def __statusMappingforBlackDuck(self, remediationStatus):
+        switcher = { 
+            "not-triaged": "NEW", 
+            "false-positive": "IGNORED", 
+            "ignored": "IGNORED", 
+            "to-be-fixed": "NEEDS_REVIEW", 
+            "fixed": "IGNORED", 
+            "mitigated": "MITIGATED", 
+            "reopened": "NEW"
+        }
+        return switcher.get(remediationStatus, "NEW")

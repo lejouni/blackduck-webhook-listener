@@ -28,9 +28,10 @@ class BlackDuckRemediator:
         success = False
         if metadata:
             if str(metadata['bd_issue_type']).lower() == "security":
-                #NOTE Black will need black duck projectName, projectVersionName, componentName, componentVersionName, vulnerabilityName, remediationStatus, remediationComment, dismissedBy
-                success = self.__remediate(metadata['bd_project_name'], metadata['bd_project_version_name'], metadata['bd_component_name'],metadata['bd_component_version_name'],
-                                            metadata['bd_vulnerability_name'],metadata["changedBy"], metadata["vulnerabilitys_status"], metadata["all_comments"])
+                for vulnerabilityName in metadata["vulnerabilities"]:
+                    #NOTE Black will need black duck projectName, projectVersionName, componentName, componentVersionName, vulnerabilityName, remediationStatus, remediationComment, dismissedBy
+                    success = self.__remediate(metadata['bd_project_name'], metadata['bd_project_version_name'], metadata['bd_component_name'],metadata['bd_component_version_name'],
+                                                vulnerabilityName, metadata["changedBy"], metadata["dismiss_reason"], metadata["vulnerability_status"], metadata["all_comments"])
             elif str(metadata['bd_issue_type']).lower() == "policy":
                 #NOTE projectName, projectVersionName, componentName, componentVersionName, policyName, approvalStatus, dismissedBy, reason, comment="-", overrideExpiresAt=None
                 success = self.__updatePolicyStatus(metadata['bd_project_name'], metadata['bd_project_version_name'], metadata['bd_component_name'],
@@ -52,10 +53,11 @@ class BlackDuckRemediator:
     :param componentVersionName: Black Duck component version name
     :param vulnerabilityName: Black Duckvulnerability name
     :param remediatedBy: Name who remediated vulnerability
-    :param remediationStatus: Remediation status
+    :param dismissStatus: Dismiss status (Original status from tool)
+    :param remediationStatus: Remediation status (Changed status for Black Duck)
     :param remediationComment: Remediation comment
     """
-    def __remediate(self, projectName, projectVersionName, componentName, componentVersionName, vulnerabilityName, remediatedBy, remediationStatus, remediationComment):
+    def __remediate(self, projectName, projectVersionName, componentName, componentVersionName, vulnerabilityName, remediatedBy, dismissStatus, remediationStatus, remediationComment):
         logging.debug(f'remediate with params: {projectName},{projectVersionName},{componentName},{componentVersionName},{vulnerabilityName},{remediationStatus},{remediationComment} ')
         parameters={"q":"name:{}".format(projectName)}
         projects = self.hub.get_projects(limit=1, parameters=parameters)
@@ -77,8 +79,8 @@ class BlackDuckRemediator:
                                 response = requests.get(url, headers=headers, verify = not self.hub.config['insecure'])
                                 if response.status_code == 200:
                                     remediationData = {}
-                                    remediationData["comment"] = self.__createComment(remediationStatus, remediationComment, remediatedBy)
-                                    remediationData["remediationStatus"]= self.__checkRemediationStatusMapping(remediationStatus)
+                                    remediationData["comment"] = self.__createComment(dismissStatus, remediationComment, remediatedBy)
+                                    remediationData["remediationStatus"]= remediationStatus
                                     logging.debug(f'Updating component status with: {remediationData}')
                                     response = requests.put(url, headers=headers, json=remediationData, verify = not self.hub.config['insecure'])
                                     if response.status_code == 202:
@@ -168,36 +170,6 @@ class BlackDuckRemediator:
                         return self.__dismissIaCbyURL(url, dismissStatus)
         return False
 
-    '''
-    Parse metadata from the given GHAS event for Black Duck issue update.
-    :param remediation_event: GHAS event
-    '''
-    def __parseMetadata(self, remediation_event):
-        metadata = {}
-        if remediation_event:
-            helpText = remediation_event["alert"]["rule"]["help"]
-            if helpText:
-                metadatas = helpText.split("Metadata\n")[-1].split('\n')
-                if metadatas:
-                    for data in metadatas:
-                        if str(data).startswith("**Black Duck Issue Type:**"):
-                            metadata['bd_issue_type'] = data.split(':**')[-1].strip()
-                        elif str(data).startswith("**Black Duck Project Name:**"):
-                            metadata['bd_project_name'] = data.split(':**')[-1].strip()
-                        elif str(data).startswith("**Black Duck Project Version Name:**"):
-                            metadata['bd_project_version_name'] = data.split(':**')[-1].strip()
-                        elif str(data).startswith("**Black Duck Vulnerability Name:**"):
-                            metadata['bd_vulnerability_name'] = data.split(':**')[-1].strip()
-                        elif str(data).startswith("**Black Duck Component Name:**"):
-                            metadata['bd_component_name'] = data.split(':**')[-1].strip()
-                        elif str(data).startswith("**Black Duck Component Version:**"):
-                            metadata['bd_component_version_name'] = data.split(':**')[-1].strip()
-                        elif str(data).startswith("**Black Duck Policy Name:**"):
-                            metadata['bd_policy_name'] = data.split(':**')[-1].strip()
-                        elif str(data).startswith("**Black Duck IaC Checker:**"):
-                            metadata['bd_iac_checkerID'] = data.split(':**')[-1].strip()
-        return metadata
-    
     def __getIacURL(self, projectVersion, iac_checker):
         if projectVersion:
             iacFindings = self.__getIACFindings(projectVersion)
@@ -267,11 +239,3 @@ class BlackDuckRemediator:
         response = requests.get(url, headers=headers, verify = not self.hub.config['insecure'])
         jsondata = response.json()
         return jsondata
-
-    def __checkRemediationStatusMapping(self, remediationStatus):
-        switcher = { 
-            "false positive": "IGNORED", 
-            "used in tests": "IGNORED",
-            "won't fix": "IGNORED" 
-        }
-        return switcher.get(remediationStatus, "NEW")

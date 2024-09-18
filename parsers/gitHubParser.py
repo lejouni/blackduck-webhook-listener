@@ -22,15 +22,18 @@ class GitHubParser():
             elif event["alert"]["tool"]["name"] == GitHubTools.COVERITY:
                 metadata = self.__parseForCoverity(event)
                 metadata["tool"] = Tools.COVERITY
+            elif event["alert"]["tool"]["name"] == GitHubTools.CNC:
+                metadata = self.__parseForCoverity(event)
+                metadata["tool"] = Tools.CNC
             else:
                 metadata["tool"] = event["alert"]["tool"]["name"]
-            metadata["action_allowed"] = False
-            if event["trigger"] == "finding:status-update":
-                metadata["action_allowed"] = True
             metadata["changedBy"] = event["sender"]["login"]
-            metadata["action_allowed"] = False
-            if event["action"] == "closed_by_user" or event["action"] == "reopened_by_user":
-                metadata["action_allowed"] = True
+            metadata["dismiss_reason"] = event["alert"]["dismissed_reason"]
+            if "action" in event:
+                if event["action"] == "closed_by_user" or event["action"] == "reopened_by_user":
+                    metadata["action_allowed"] = True
+            else:
+                metadata["action_allowed"] = False
         return metadata
 
     def __parseForCoverity(self, event):
@@ -38,7 +41,6 @@ class GitHubParser():
         helpText = event["alert"]["rule"]["help"]
         if helpText:
             metadatas = helpText.split("Metadata\n")[-1].split('\n')
-            vulnerabilities = []
             if metadatas:
                 for data in metadatas:
                     if str(data).startswith("**Coverity Project Name:**"):
@@ -47,6 +49,8 @@ class GitHubParser():
                         metadata['cov_stream'] = data.split(':**')[-1].strip()
                     elif str(data).startswith("**Coverity CID:**"):
                         metadata['cov_cids'] = data.split(':**')[-1].strip().split(",")
+            metadata["cov_status"] = self.__checkStatusMappingCoverity(event["alert"]["dismissed_reason"])
+            metadata["cov_comment"] = event["alert"]["dismissed_comment"]
         return metadata
 
     def __parseforBlackDuck(self, event):
@@ -75,7 +79,7 @@ class GitHubParser():
                     elif str(data).startswith("**Black Duck IaC Checker:**"):
                         metadata['bd_iac_checkerID'] = data.split(':**')[-1].strip()
         if str(metadata["bd_issue_type"]).lower() == "security":
-            metadata["vulnerabilitys_status"] = event["alert"]["dismissed_reason"]
+            metadata["vulnerability_status"] = self.__checkStatusMappingBlacDuck(event["alert"]["dismissed_reason"])
             metadata["all_comments"] = event["alert"]["dismissed_comment"]
         elif str(metadata["bd_issue_type"]).lower() == "policy":
             metadata["policy_status"] = f'{"IN_VIOLATION_OVERRIDDEN" if event["action"] == "closed_by_user" else "IN_VIOLATION"}'
@@ -85,3 +89,19 @@ class GitHubParser():
             metadata["bd_iac_checkerID"] = metadata['bd_iac_checkerID']
             metadata["iac_status"] = f'{True if event["action"] == "closed_by_user" else False}'
         return metadata
+
+    def __checkStatusMappingBlacDuck(self, remediationStatus):
+        switcher = { 
+            "false positive": "IGNORED", 
+            "used in tests": "IGNORED",
+            "won't fix": "IGNORED" 
+        }
+        return switcher.get(remediationStatus, "NEW")
+
+    def __checkStatusMappingCoverity(self, remediationStatus):
+        switcher = { 
+            "false positive": "False Positive", 
+            "used in tests": "Intentional",
+            "won't fix": "Intentional" 
+        }
+        return switcher.get(remediationStatus, "Unclassified")
