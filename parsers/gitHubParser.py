@@ -35,6 +35,18 @@ class GitHubParser():
 
     def __parseForCoverity(self, event):
         metadata = {}
+        helpText = event["alert"]["rule"]["help"]
+        if helpText:
+            metadatas = helpText.split("Metadata\n")[-1].split('\n')
+            vulnerabilities = []
+            if metadatas:
+                for data in metadatas:
+                    if str(data).startswith("**Coverity Project Name:**"):
+                        metadata['cov_project'] = data.split(':**')[-1].strip()
+                    elif str(data).startswith("**Coverity Stream:**"):
+                        metadata['cov_stream'] = data.split(':**')[-1].strip()
+                    elif str(data).startswith("**Coverity CID:**"):
+                        metadata['cov_cids'] = data.split(':**')[-1].strip().split(",")
         return metadata
 
     def __parseforBlackDuck(self, event):

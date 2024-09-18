@@ -34,9 +34,11 @@ def github_webhook():
         remediation_event = request.json
         metadata = GitHubParser().parseMetadata(remediation_event)
         if metadata["action_allowed"]:
+            logging.debug(f'request.json: {json.dumps(request.json, indent=3)}')
             if metadata["tool"] == Tools.BLACK_DUCK:
-                logging.debug(f'request.json: {json.dumps(request.json, indent=3)}')
                 success = BlackDuckRemediator().updateStatus(metadata)
+            elif metadata["tool"]  == Tools.COVERITY:
+                success = CoverityRemediator().updateStatus(metadata)
             else:
                 success = False
                 logging.info(f'Tool {metadata["tool"]} is not implemented yet!')
