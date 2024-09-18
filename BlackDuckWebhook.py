@@ -37,7 +37,7 @@ def github_webhook():
             logging.debug(f'request.json: {json.dumps(request.json, indent=3)}')
             if metadata["tool"] == Tools.BLACK_DUCK:
                 success = BlackDuckRemediator().updateStatus(metadata)
-            elif metadata["tool"]  == Tools.COVERITY or metadata["tool"]  == Tools.CNC:
+            elif metadata["tool"] == Tools.COVERITY or metadata["tool"] == Tools.CNC:
                 success = CoverityRemediator().updateStatus(metadata)
             else:
                 success = False
