@@ -31,7 +31,7 @@ class BlackDuckRemediator:
                 for vulnerabilityName in metadata["vulnerabilities"]:
                     #NOTE Black will need black duck projectName, projectVersionName, componentName, componentVersionName, vulnerabilityName, remediationStatus, remediationComment, dismissedBy
                     success = self.__remediate(metadata['bd_project_name'], metadata['bd_project_version_name'], metadata['bd_component_name'],metadata['bd_component_version_name'],
-                                                vulnerabilityName, metadata["changedBy"], metadata["dismiss_reason"], metadata["vulnerability_status"], metadata["all_comments"])
+                                                metadata['bd_component_origin'], vulnerabilityName, metadata["changedBy"], metadata["dismiss_reason"], metadata["vulnerability_status"], metadata["all_comments"])
             elif str(metadata['bd_issue_type']).lower() == "policy":
                 #NOTE projectName, projectVersionName, componentName, componentVersionName, policyName, approvalStatus, dismissedBy, reason, comment="-", overrideExpiresAt=None
                 success = self.__updatePolicyStatus(metadata['bd_project_name'], metadata['bd_project_version_name'], metadata['bd_component_name'],
@@ -51,13 +51,14 @@ class BlackDuckRemediator:
     :param projectVersionName: Black Duck project version name
     :param componentName: Black Duck component name
     :param componentVersionName: Black Duck component version name
+    :param componentOriginID: The ID of the component origin
     :param vulnerabilityName: Black Duckvulnerability name
     :param remediatedBy: Name who remediated vulnerability
     :param dismissStatus: Dismiss status (Original status from tool)
     :param remediationStatus: Remediation status (Changed status for Black Duck)
     :param remediationComment: Remediation comment
     """
-    def __remediate(self, projectName, projectVersionName, componentName, componentVersionName, vulnerabilityName, remediatedBy, dismissStatus, remediationStatus, remediationComment):
+    def __remediate(self, projectName, projectVersionName, componentName, componentVersionName, componentOriginID, vulnerabilityName, remediatedBy, dismissStatus, remediationStatus, remediationComment):
         logging.debug(f'remediate with params: {projectName},{projectVersionName},{componentName},{componentVersionName},{vulnerabilityName},{remediationStatus},{remediationComment} ')
         parameters={"q":"name:{}".format(projectName)}
         projects = self.hub.get_projects(limit=1, parameters=parameters)
@@ -75,18 +76,25 @@ class BlackDuckRemediator:
                         for vulnComp in vulnComps["items"]:
                             logging.debug(vulnComp)
                             if vulnComp["componentName"] == componentName and vulnComp["componentVersionName"] == componentVersionName:
-                                url = vulnComp['_meta']['href']
-                                response = requests.get(url, headers=headers, verify = not self.hub.config['insecure'])
-                                if response.status_code == 200:
-                                    remediationData = {}
-                                    remediationData["comment"] = self.__createComment(dismissStatus, remediationComment, remediatedBy)
-                                    remediationData["remediationStatus"]= remediationStatus
-                                    logging.debug(f'Updating component status with: {remediationData}')
-                                    response = requests.put(url, headers=headers, json=remediationData, verify = not self.hub.config['insecure'])
-                                    if response.status_code == 202:
-                                        return True
-                                    else:
-                                        logging.error(f"Remediation status update failed: {response}/{response.content}")
+                                #Check if component origin ID match if it is given
+                                #There might be same component and same vesion of it from different origins
+                                logging.debug(f'vulnComponent: {vulnComp}')
+                                if componentOriginID and vulnComp["componentVersionOriginId"] == componentOriginID:
+                                    url = vulnComp['_meta']['href']
+                                elif not componentOriginID:
+                                    url = vulnComp['_meta']['href']
+                                if url:
+                                    response = requests.get(url, headers=headers, verify = not self.hub.config['insecure'])
+                                    if response.status_code == 200:
+                                        remediationData = {}
+                                        remediationData["comment"] = self.__createComment(dismissStatus, remediationComment, remediatedBy)
+                                        remediationData["remediationStatus"]= remediationStatus
+                                        logging.debug(f'Updating component status with: {remediationData}')
+                                        response = requests.put(url, headers=headers, json=remediationData, verify = not self.hub.config['insecure'])
+                                        if response.status_code == 202:
+                                            return True
+                                        else:
+                                            logging.error(f"Remediation status update failed: {response}/{response.content}")
                     else:
                         logging.error(f'No vulnerable component found with name: {componentName} and vulnerability name: {vulnerabilityName}')
         return False
@@ -205,7 +213,7 @@ class BlackDuckRemediator:
         if reason:
             policyComment = f'Reason to dismiss: {reason}\n'
         if comment:
-            policyComment = f'{policyComment}Dismissal comment: {comment}\n'
+            policyComment = f'{policyComment}Comment: {comment}\n'
         if dismissedBy:
             policyComment = f'{policyComment}Changed by: {dismissedBy}'
         return policyComment
@@ -239,3 +247,4 @@ class BlackDuckRemediator:
         response = requests.get(url, headers=headers, verify = not self.hub.config['insecure'])
         jsondata = response.json()
         return jsondata
+    

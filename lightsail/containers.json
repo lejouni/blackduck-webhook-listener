@@ -1,6 +1,6 @@
 {
     "blackduck-webhook": {
-        "image": ":blackduck-webhook-service.blackduck-webhook-container.69",
+        "image": ":blackduck-webhook-service.blackduck-webhook-container.76",
         "ports": {
             "8090": "HTTP"
         },
@@ -10,5 +10,6 @@
             "AWS_ACCESS_KEY_ID": "",
             "AWS_SECRET_ACCESS_KEY": "",
             "AWS_SESSION_TOKEN": ""
-        }    }
+        }    
+    }
 }

@@ -33,7 +33,7 @@ def github_webhook():
         success = False
         remediation_event = request.json
         metadata = GitHubParser().parseMetadata(remediation_event)
-        if metadata["action_allowed"]:
+        if remediation_event["action"] == "closed_by_user" or remediation_event["action"] == "reopened_by_user":
             logging.debug(f'request.json: {json.dumps(request.json, indent=3)}')
             if metadata["tool"] == Tools.BLACK_DUCK:
                 success = BlackDuckRemediator().updateStatus(metadata)

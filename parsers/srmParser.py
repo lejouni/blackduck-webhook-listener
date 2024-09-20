@@ -43,6 +43,7 @@ class SRMParser():
         metadata["bd_project_name"] = result["metadata"]["Black Duck Project"].split(":")[0]
         metadata["bd_project_version_name"] = result["metadata"]["Black Duck Project"].split(":")[-1]
         metadata["bd_component_name"] = f'{result["metadata"]["Black Duck Component Name"] if "Black Duck Component Name" in result["metadata"] else None}'
+        metadata["bd_component_origin"] = f'{result["metadata"]["Component Identifier"] if "Component Identifier" in result["metadata"] else None}'
         metadata["bd_component_version_name"] = f'{result["metadata"]["Black Duck Component Version"] if "Black Duck Component Version" in result["metadata"] else None}'
         metadata["bd_issue_type"] = str(result["metadata"]["Black Duck Issue Type"]).lower()
 
@@ -52,7 +53,7 @@ class SRMParser():
                 for vulnerability in result["vulnerabilities"]:
                     vulnerabilities.append(vulnerability["identifier"])
             metadata["vulnerabilities"] = vulnerabilities
-            metadata["vulnerabilitys_status"] = self.__statusMappingforBlackDuck(finding["status"])
+            metadata["vulnerability_status"] = self.__statusMappingforBlackDuck(finding["status"])
             metadata["all_comments"] = self.srm.getRemediationComments(finding["id"], finding["projectId"])
         elif metadata["bd_issue_type"] == "policy":
             metadata["bd_policy_name"] = result["descriptor"]["name"]

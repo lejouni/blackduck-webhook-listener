@@ -29,11 +29,6 @@ class GitHubParser():
                 metadata["tool"] = event["alert"]["tool"]["name"]
             metadata["changedBy"] = event["sender"]["login"]
             metadata["dismiss_reason"] = event["alert"]["dismissed_reason"]
-            if "action" in event:
-                if event["action"] == "closed_by_user" or event["action"] == "reopened_by_user":
-                    metadata["action_allowed"] = True
-            else:
-                metadata["action_allowed"] = False
         return metadata
 
     def __parseForCoverity(self, event):
@@ -72,6 +67,8 @@ class GitHubParser():
                         metadata["vulnerabilities"] = vulnerabilities
                     elif str(data).startswith("**Black Duck Component Name:**"):
                         metadata['bd_component_name'] = data.split(':**')[-1].strip()
+                    elif str(data).startswith("**Black Duck Component Origin:**"):
+                        metadata['bd_component_origin'] = data.split(':**')[-1].strip()
                     elif str(data).startswith("**Black Duck Component Version:**"):
                         metadata['bd_component_version_name'] = data.split(':**')[-1].strip()
                     elif str(data).startswith("**Black Duck Policy Name:**"):
