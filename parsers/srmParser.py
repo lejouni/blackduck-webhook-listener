@@ -5,7 +5,7 @@ get the following info: "descriptions", "results.metadata", "results.vulnerabili
 Example of adding WebHook to SRM
   {
     "id": 1,
-    "name": "SynopysTools",
+    "name": "BlackDuckTools",
     "enabled": true,
     "payloadUrl": "https://<service_url>/webhook/srm",
     "verifySsl": false,
