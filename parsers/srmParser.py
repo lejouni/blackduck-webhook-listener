@@ -1,3 +1,21 @@
+'''
+This will parse the event from SRM. When configuring webhook to SRM you need to
+get the following info: "descriptions", "results.metadata", "results.vulnerabilities", "aggregations.tool-summary"
+
+Example of adding WebHook to SRM
+  {
+    "id": 1,
+    "name": "SynopysTools",
+    "enabled": true,
+    "payloadUrl": "https://<service_url>/webhook/srm",
+    "verifySsl": false,
+    "trigger": "finding:status-update",
+    "projectScope": "all",
+    "expand": [
+      "descriptions", "results.metadata", "results.vulnerabilities", "aggregations.tool-summary"
+    ]
+  }
+'''
 from utils.SRMInstance import SRMInstance
 from utils.Constants import Tools, SRMTools
 
