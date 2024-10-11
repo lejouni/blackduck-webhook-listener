@@ -1,6 +1,6 @@
 {
     "blackduck-webhook": {
-        "image": ":blackduck-webhook-service.blackduck-webhook-container.76",
+        "image": ":blackduck-webhook-service.blackduck-webhook-container.80",
         "ports": {
             "8090": "HTTP"
         },

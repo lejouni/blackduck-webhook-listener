@@ -1,6 +1,6 @@
 '''
 This will parse the event from SRM. When configuring webhook to SRM you need to
-get the following info: "descriptions", "results.metadata", "results.vulnerabilities", "aggregations.tool-summary"
+get the following info: "descriptions", "results.component-details", "results.metadata", "results.vulnerabilities", "aggregations.tool-summary"
 
 Example of adding WebHook to SRM
   {
@@ -12,9 +12,10 @@ Example of adding WebHook to SRM
     "trigger": "finding:status-update",
     "projectScope": "all",
     "expand": [
-      "descriptions", "results.metadata", "results.vulnerabilities", "aggregations.tool-summary"
+      "descriptions", "results.component-details", "results.metadata", "results.vulnerabilities", "aggregations.tool-summary"
     ]
   }
+NOTE: This will work from SRM version v2024.9.3 forward.
 '''
 from utils.SRMInstance import SRMInstance
 from utils.Constants import Tools, SRMTools
@@ -27,7 +28,7 @@ class SRMParser():
     Parse metadata from the given GHAS event for Black Duck issue update.
     :param event: GHAS event
     '''
-    def parseMetadata(self, result, finding):
+    def parseMetadata(self, result, finding, remediation_event):
         metadata = {}
         if result and finding:
             if result["tool"] == SRMTools.BLACK_DUCK:
@@ -41,7 +42,7 @@ class SRMParser():
                 metadata["tool"] = Tools.CNC
             else:
                 metadata["tool"] = result["tool"]
-        metadata["changedBy"] = "SRM"
+        metadata["changedBy"] = remediation_event["reasons"][0]["user"]["name"]
         metadata["dismiss_reason"] = finding["status"]
         return metadata
 
@@ -60,9 +61,9 @@ class SRMParser():
         metadata = {}
         metadata["bd_project_name"] = result["metadata"]["Black Duck Project"].split(":")[0]
         metadata["bd_project_version_name"] = result["metadata"]["Black Duck Project"].split(":")[-1]
-        metadata["bd_component_name"] = f'{result["metadata"]["Black Duck Component Name"] if "Black Duck Component Name" in result["metadata"] else None}'
-        metadata["bd_component_origin"] = f'{result["metadata"]["Component Identifier"] if "Component Identifier" in result["metadata"] else None}'
-        metadata["bd_component_version_name"] = f'{result["metadata"]["Black Duck Component Version"] if "Black Duck Component Version" in result["metadata"] else None}'
+        metadata["bd_component_name"] = f'{result["component"]["name"] if "name" in result["component"] else None}'
+        metadata["bd_component_origin"] = f'{result["component"]["origin"]["identifier"] if "origin" in result["component"] else None}'
+        metadata["bd_component_version_name"] = f'{result["component"]["version"]["version"] if "version" in result["component"] else None}'
         metadata["bd_issue_type"] = str(result["metadata"]["Black Duck Issue Type"]).lower()
 
         if metadata["bd_issue_type"] == "security":

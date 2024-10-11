@@ -1,10 +1,11 @@
 '''
 This webhook support following tools for status change events:
 * GitHub Advance Security (GHAS)
-    * Black Duck
-* Security Risk Manager (SRM)
-    * Black Duck
-    * Coverity
+    * Black Duck SCA
+    * Coverity SAST
+* Security Risk Manager (SRM) v2024.9.3 ->
+    * Black Duck SCA
+    * Coverity SAST
 
 '''
 import sys
@@ -21,7 +22,7 @@ from parsers.gitHubParser import GitHubParser
 from parsers.srmParser import SRMParser
 from utils.Constants import Tools
 
-__version__="0.0.5"
+__version__="0.0.6"
 __author__ = "Jouni Lehto"
 
 app = Flask(__name__)
@@ -34,7 +35,7 @@ def github_webhook():
         remediation_event = request.json
         metadata = GitHubParser().parseMetadata(remediation_event)
         if remediation_event["action"] == "closed_by_user" or remediation_event["action"] == "reopened_by_user":
-            logging.debug(f'request.json: {json.dumps(request.json, indent=3)}')
+            logging.debug(f'request.json: {json.dumps(remediation_event, indent=3)}')
             if metadata["tool"] == Tools.BLACK_DUCK:
                 success = BlackDuckRemediator().updateStatus(metadata)
             elif metadata["tool"] == Tools.COVERITY or metadata["tool"] == Tools.CNC:
@@ -62,11 +63,12 @@ def srm_webhook():
         start = timer()
         success = False
         remediation_event = request.json
-        if remediation_event["trigger"] == "finding:status-update":
+        if remediation_event["trigger"] == "finding:status-update" and remediation_event["reasons"][0]["reason"] == "user-action" and remediation_event["reasons"][0]["action"] == "triage status update":
+            logging.debug(f'request.json: {json.dumps(remediation_event, indent=3)}')
             for finding in remediation_event["findings"]:
                 for result in finding["results"]:
                     if not finding["findingStatus"]["id"] == "gone":
-                        metadata = SRMParser().parseMetadata(result, finding)
+                        metadata = SRMParser().parseMetadata(result, finding, remediation_event)
                         if metadata["tool"]  == Tools.BLACK_DUCK:
                             success = BlackDuckRemediator().updateStatus(metadata)
                         elif metadata["tool"]  == Tools.COVERITY:
