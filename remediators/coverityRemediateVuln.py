@@ -70,7 +70,7 @@ class CoverityRemediator:
         comment = ""
         if metadata:
             comment = f'Reason: {metadata["dismiss_reason"] if metadata["dismiss_reason"] else "-"}\n'
-            comment = f'{comment}Comment: {metadata["cov_comment"] if metadata["cov_comment"] else "-"}\n'
+            comment = f'{comment}Comments:\n{metadata["cov_comment"] if metadata["cov_comment"] else "-"}\n'
             comment = f'{comment}Changed by: {metadata["changedBy"] if metadata["changedBy"] else "-"}'
         return comment
     
