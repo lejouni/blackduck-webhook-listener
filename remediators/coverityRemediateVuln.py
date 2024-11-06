@@ -5,7 +5,7 @@ import json
 from utils.SecretManager import SecretManager
 
 __author__ = "Jouni Lehto"
-__versionro__="0.0.5"
+__versionro__="0.0.7"
 
 class CoverityRemediator:
     def __init__(self, log_level=logging.INFO):

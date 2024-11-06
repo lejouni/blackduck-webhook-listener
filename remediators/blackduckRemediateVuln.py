@@ -5,7 +5,7 @@ import requests
 from utils.SecretManager import SecretManager
 
 __author__ = "Jouni Lehto"
-__versionro__="0.0.5"
+__versionro__="0.0.7"
 
 class BlackDuckRemediator:
     def __init__(self, log_level=logging.DEBUG):
@@ -213,7 +213,7 @@ class BlackDuckRemediator:
         if reason:
             policyComment = f'Reason to dismiss: {reason}\n'
         if comment:
-            policyComment = f'{policyComment}Comment: {comment}\n'
+            policyComment = f'{policyComment}Comments:\n{comment}\n'
         if dismissedBy:
             policyComment = f'{policyComment}Changed by: {dismissedBy}'
         return policyComment

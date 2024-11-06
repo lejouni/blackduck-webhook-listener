@@ -2,7 +2,7 @@ import logging
 import sys
 import requests
 from dateutil.parser import parse
-from utils.SecretManager import SecretManager
+from SecretManager import SecretManager
 
 class SRMInstance:
     def __init__(self, log_level=logging.DEBUG):
@@ -15,7 +15,7 @@ class SRMInstance:
         self.token = SecretManager().get_secret("SRM")["SRMTOKEN"]
     
     def getRemediationComments(self, findingID, projectID, newestOnly=False):
-        comments = None #self.__getFindingComments(findingID, projectID)
+        comments = self.__getFindingComments(findingID=findingID, projectID=projectID)
         modified_comments = "Changed by SRM"
         if comments:
             modified_comments = ""
@@ -40,6 +40,7 @@ class SRMInstance:
             if response.status_code == 200:
                 return response.json()
             else:
+                logging.debug(response.content)
                 logging.error(f"getFindingHistory failed: {response}/{response.json()}")
         else:
             logging.error(f"findingID or projectID was not given and both are required.")
@@ -62,7 +63,7 @@ class SRMInstance:
 if __name__ == '__main__':
     try:
         srm = SRMInstance()
-        logging.debug(srm.__getFindingComments("58", "1"))
+        logging.debug(srm.getRemediationComments(projectID="621", findingID="644317"))
         logging.info("Done")
     except Exception as e:
         logging.exception(e)

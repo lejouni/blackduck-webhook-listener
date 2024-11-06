@@ -22,7 +22,7 @@ from parsers.gitHubParser import GitHubParser
 from parsers.srmParser import SRMParser
 from utils.Constants import Tools
 
-__version__="0.0.6"
+__version__="0.0.7"
 __author__ = "Jouni Lehto"
 
 app = Flask(__name__)
